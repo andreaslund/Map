@@ -43,7 +43,21 @@ extension Map {
         }
 
         // MARK: Methods
+        
+        func configTap(view: MKMapView) {
+            view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleTap(_:))) )
+        }
 
+        @objc func handleTap(_ recognizer: UITapGestureRecognizer) {
+           
+            if let mapView = recognizer.view as? MKMapView , recognizer.state == .ended {
+                let locationInView = recognizer.location(in:  mapView)
+                let tappedCoordinate = mapView.convert(locationInView , toCoordinateFrom: mapView)
+                
+                view?.coordinateFromTouch?(tappedCoordinate)
+            }
+        }
+     
         func update(_ mapView: MKMapView, from newView: Map, context: Context) {
             defer { view = newView }
             let animation = context.transaction.animation

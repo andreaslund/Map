@@ -35,6 +35,9 @@ public struct Map<AnnotationItems: RandomAccessCollection, OverlayItems: RandomA
 
     let overlayItems: OverlayItems
     let overlayContent: (OverlayItems.Element) -> MapOverlay
+#if os(iOS)
+    let coordinateFromTouch: ((CLLocationCoordinate2D) -> Void)?
+#endif
 
 }
 
@@ -188,7 +191,8 @@ extension Map {
         @MapAnnotationBuilder annotationContent: @escaping (AnnotationItems.Element) -> MapAnnotation,
         @OptionalMapAnnotationBuilder clusterAnnotation: @escaping (MKClusterAnnotation, [AnnotationItems.Element]) -> MapAnnotation? = { _, _ in nil },
         overlayItems: OverlayItems,
-        @MapOverlayBuilder overlayContent: @escaping (OverlayItems.Element) -> MapOverlay
+        @MapOverlayBuilder overlayContent: @escaping (OverlayItems.Element) -> MapOverlay,
+        coordinateFromTouch: ((CLLocationCoordinate2D) -> Void)?
     ) {
         self.usesRegion = true
         self._coordinateRegion = coordinateRegion
@@ -209,6 +213,7 @@ extension Map {
         self.clusterAnnotation = clusterAnnotation
         self.overlayItems = overlayItems
         self.overlayContent = overlayContent
+        self.coordinateFromTouch = coordinateFromTouch
     }
 
     public init(
@@ -222,7 +227,8 @@ extension Map {
         @MapAnnotationBuilder annotationContent: @escaping (AnnotationItems.Element) -> MapAnnotation,
         @OptionalMapAnnotationBuilder clusterAnnotation: @escaping (MKClusterAnnotation, [AnnotationItems.Element]) -> MapAnnotation? = { _, _ in nil },
         overlayItems: OverlayItems,
-        @MapOverlayBuilder overlayContent: @escaping (OverlayItems.Element) -> MapOverlay
+        @MapOverlayBuilder overlayContent: @escaping (OverlayItems.Element) -> MapOverlay,
+        coordinateFromTouch: ((CLLocationCoordinate2D) -> Void)?
     ) {
         self.usesRegion = false
         self._coordinateRegion = .constant(.init())
@@ -243,6 +249,7 @@ extension Map {
         self.clusterAnnotation = clusterAnnotation
         self.overlayItems = overlayItems
         self.overlayContent = overlayContent
+        self.coordinateFromTouch = coordinateFromTouch
     }
 
 }
@@ -401,7 +408,8 @@ extension Map where AnnotationItems == [IdentifiableObject<MKAnnotation>] {
         },
         @OptionalMapAnnotationBuilder clusterAnnotation: @escaping (MKClusterAnnotation) -> MapAnnotation? = { _ in nil },
         overlayItems: OverlayItems,
-        @MapOverlayBuilder overlayContent: @escaping (OverlayItems.Element) -> MapOverlay
+        @MapOverlayBuilder overlayContent: @escaping (OverlayItems.Element) -> MapOverlay,
+        coordinateFromTouch: ((CLLocationCoordinate2D) -> Void)?
     ) {
         self.init(
             coordinateRegion: coordinateRegion,
@@ -414,7 +422,8 @@ extension Map where AnnotationItems == [IdentifiableObject<MKAnnotation>] {
             annotationContent: { annotationContent($0.object) },
             clusterAnnotation: { annotation, _ in clusterAnnotation(annotation) },
             overlayItems: overlayItems,
-            overlayContent: overlayContent
+            overlayContent: overlayContent,
+            coordinateFromTouch: coordinateFromTouch
         )
     }
 
@@ -432,7 +441,8 @@ extension Map where AnnotationItems == [IdentifiableObject<MKAnnotation>] {
         },
         @OptionalMapAnnotationBuilder clusterAnnotation: @escaping (MKClusterAnnotation) -> MapAnnotation? = { _ in nil },
         overlayItems: OverlayItems,
-        @MapOverlayBuilder overlayContent: @escaping (OverlayItems.Element) -> MapOverlay
+        @MapOverlayBuilder overlayContent: @escaping (OverlayItems.Element) -> MapOverlay,
+        coordinateFromTouch: ((CLLocationCoordinate2D) -> Void)?
     ) {
         self.init(
             mapRect: mapRect,
@@ -445,7 +455,8 @@ extension Map where AnnotationItems == [IdentifiableObject<MKAnnotation>] {
             annotationContent: { annotationContent($0.object) },
             clusterAnnotation: { annotation, _ in clusterAnnotation(annotation) },
             overlayItems: overlayItems,
-            overlayContent: overlayContent
+            overlayContent: overlayContent,
+            coordinateFromTouch: coordinateFromTouch
         )
 
     }
@@ -616,7 +627,8 @@ extension Map where OverlayItems == [IdentifiableObject<MKOverlay>] {
             return RendererMapOverlay(overlay: overlay) { _, overlay in
                 MKOverlayRenderer(overlay: overlay)
             }
-        }
+        },
+        coordinateFromTouch: ((CLLocationCoordinate2D) -> Void)?
     ) {
         self.init(
             coordinateRegion: coordinateRegion,
@@ -629,7 +641,8 @@ extension Map where OverlayItems == [IdentifiableObject<MKOverlay>] {
             annotationContent: annotationContent,
             clusterAnnotation: clusterAnnotation,
             overlayItems: overlays.map(IdentifiableObject.init),
-            overlayContent: { overlayContent($0.object) }
+            overlayContent: { overlayContent($0.object) },
+            coordinateFromTouch: coordinateFromTouch
         )
     }
 
@@ -649,7 +662,8 @@ extension Map where OverlayItems == [IdentifiableObject<MKOverlay>] {
             return RendererMapOverlay(overlay: overlay) { _, overlay in
                 MKOverlayRenderer(overlay: overlay)
             }
-        }
+        },
+        coordinateFromTouch: ((CLLocationCoordinate2D) -> Void)?
     ) {
         self.init(
             mapRect: mapRect,
@@ -662,7 +676,8 @@ extension Map where OverlayItems == [IdentifiableObject<MKOverlay>] {
             annotationContent: annotationContent,
             clusterAnnotation: clusterAnnotation,
             overlayItems: overlays.map(IdentifiableObject.init),
-            overlayContent: { overlayContent($0.object) }
+            overlayContent: { overlayContent($0.object) },
+            coordinateFromTouch: coordinateFromTouch
         )
     }
 
@@ -848,7 +863,8 @@ extension Map
             return RendererMapOverlay(overlay: overlay) { _, overlay in
                 MKOverlayRenderer(overlay: overlay)
             }
-        }
+        },
+        coordinateFromTouch: ((CLLocationCoordinate2D) -> Void)?
     ) {
         self.init(
             coordinateRegion: coordinateRegion,
@@ -861,7 +877,8 @@ extension Map
             annotationContent: { annotationContent($0.object) },
             clusterAnnotation: { annotation, _ in clusterAnnotation(annotation) },
             overlayItems: overlays.map(IdentifiableObject.init),
-            overlayContent: { overlayContent($0.object) }
+            overlayContent: { overlayContent($0.object) },
+            coordinateFromTouch: coordinateFromTouch
         )
     }
 
@@ -884,7 +901,8 @@ extension Map
             return RendererMapOverlay(overlay: overlay) { _, overlay in
                 MKOverlayRenderer(overlay: overlay)
             }
-        }
+        },
+        coordinateFromTouch: ((CLLocationCoordinate2D) -> Void)?
     ) {
         self.init(
             mapRect: mapRect,
@@ -897,7 +915,8 @@ extension Map
             annotationContent: { annotationContent($0.object) },
             clusterAnnotation: { annotation, _ in clusterAnnotation(annotation) },
             overlayItems: overlays.map(IdentifiableObject.init),
-            overlayContent: { overlayContent($0.object) }
+            overlayContent: { overlayContent($0.object) },
+            coordinateFromTouch: coordinateFromTouch
         )
     }
 
