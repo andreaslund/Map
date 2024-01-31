@@ -45,9 +45,12 @@ extension Map {
         // MARK: Methods
         
         func configTap(view: MKMapView) {
+#if canImport(UIKit)
             view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleTap(_:))) )
+#endif
         }
 
+#if canImport(UIKit)
         @objc func handleTap(_ recognizer: UITapGestureRecognizer) {
            
             if let mapView = recognizer.view as? MKMapView , recognizer.state == .ended {
@@ -57,7 +60,8 @@ extension Map {
                 view?.coordinateFromTouch?(tappedCoordinate)
             }
         }
-     
+#endif
+        
         func update(_ mapView: MKMapView, from newView: Map, context: Context) {
             defer { view = newView }
             let animation = context.transaction.animation
