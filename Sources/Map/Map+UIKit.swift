@@ -16,7 +16,9 @@ extension Map: UIViewRepresentable {
     public func makeUIView(context: Context) -> MKMapView {
         let mapView = MKMapView()
         mapView.delegate = context.coordinator
-        context.coordinator.configTap(view: mapView)
+        if self.coordinateFromTouch != nil {
+            context.coordinator.configTap(view: mapView)
+        }
         updateUIView(mapView, context: context)
         return mapView
     }

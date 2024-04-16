@@ -214,6 +214,7 @@ extension Map {
         self.overlayItems = overlayItems
         self.overlayContent = overlayContent
         self.coordinateFromTouch = coordinateFromTouch
+        
     }
 
     public init(
